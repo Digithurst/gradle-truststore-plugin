@@ -9,15 +9,20 @@ import javax.annotation.Nullable;
 import java.io.File;
 
 public class Truststore {
-    final static Base DEFAULT_BASE = makeJavaBase("changeit");
+    private static Base defaultBase = null;
 
     private final File projectDir;
+    private final String javaHomePath;
 
-    private Base base = DEFAULT_BASE;
-    private final TrustedCertificates certificates = new TrustedCertificates();
+    private Base base;
+    private final TrustedCertificates certificates;
 
-    public Truststore(File projectDir) {
+    public Truststore(@Nonnull File projectDir, @Nonnull String javaHomePath) {
         this.projectDir = projectDir;
+        this.javaHomePath = javaHomePath;
+
+        base = getDefaultBase();
+        certificates = new TrustedCertificates();
     }
 
     public Base getBase() {
@@ -26,6 +31,14 @@ public class Truststore {
 
     public void setBase(Base base) {
         this.base = base;
+    }
+
+    final Base getDefaultBase() {
+        if (defaultBase == null) {
+            defaultBase = java("changeit");
+        }
+
+        return defaultBase;
     }
 
     public TrustedCertificates getCertificates() {
@@ -63,21 +76,12 @@ public class Truststore {
 
     @Nonnull
     public final Base java(@Nonnull @MatchesPattern(".{6,}") String password) {
-        return makeJavaBase(password);
+        return new Base(new File(javaHomePath + "/lib/security", "cacerts"), password);
     }
 
     @Nonnull
     public final Base file(@Nonnull String storeFileName, @Nonnull @MatchesPattern(".{6,}") String password) {
         // TODO: handle absolute paths
         return new Base(new File(projectDir.getAbsolutePath() + "/" + storeFileName), password);
-    }
-
-    @Nonnull
-    private static Base makeJavaBase(@Nonnull @MatchesPattern(".{6,}") String password) {
-        if (System.getenv("JAVA_HOME") == null) {
-            throw new GradleScriptException("Referring to default Java key store, but JAVA_HOME not set.", null);
-        }
-
-        return new Base(new File(System.getenv("JAVA_HOME") + "/lib/security", "cacerts"), password);
     }
 }

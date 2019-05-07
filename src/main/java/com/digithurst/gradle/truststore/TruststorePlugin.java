@@ -48,8 +48,13 @@ public final class TruststorePlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getExtensions().create("truststore", Truststore.class, project.getProjectDir());
+        @SuppressWarnings("ConstantConditions") // property is always specified: https://docs.gradle.org/current/userguide/build_environment.html
+        String javaHome = project.property("org.gradle.java.home").toString();
+        logger.debug("Found Java home directory: " + javaHome);
 
+        project.getExtensions().create("truststore", Truststore.class, project.getProjectDir(), javaHome);
+
+        project.property("org.gradle.java.home");
         project.afterEvaluate(this::setupStore);
         logger.debug("Deferred setup of trust store");
     }
@@ -60,7 +65,7 @@ public final class TruststorePlugin implements Plugin<Project> {
         final Truststore.Base storeBase = truststore.getBase();
         final List<TrustedCertificate> certificates = truststore.getCertificates().getCertificates();
 
-        if (storeBase == Truststore.DEFAULT_BASE && certificates.isEmpty()) {
+        if (storeBase == truststore.getDefaultBase() && certificates.isEmpty()) {
             assert storeBase.getStore() != null;
             logger.debug("Using default trust store: " + storeBase.getStore().getAbsolutePath());
         } else if (truststore.getBase().getStore() != null && truststore.getCertificates().isEmpty()) {
