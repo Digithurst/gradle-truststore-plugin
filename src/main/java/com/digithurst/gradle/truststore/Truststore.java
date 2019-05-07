@@ -1,6 +1,7 @@
 package com.digithurst.gradle.truststore;
 
 import org.gradle.api.Action;
+import org.gradle.api.GradleScriptException;
 
 import javax.annotation.MatchesPattern;
 import javax.annotation.Nonnull;
@@ -73,6 +74,10 @@ public class Truststore {
 
     @Nonnull
     private static Base makeJavaBase(@Nonnull @MatchesPattern(".{6,}") String password) {
+        if (System.getenv("JAVA_HOME") == null) {
+            throw new GradleScriptException("Referring to default Java key store, but JAVA_HOME not set.", null);
+        }
+
         return new Base(new File(System.getenv("JAVA_HOME") + "/lib/security", "cacerts"), password);
     }
 }

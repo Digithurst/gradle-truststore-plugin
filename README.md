@@ -1,4 +1,4 @@
-# gradle-truststore-plugin
+# Custom Trust Stores for Gradle Builds
 
 <!-- TODO: add badges -->
 
@@ -13,6 +13,8 @@ repository that uses a self-signed certificate.
 Add this to your `build.gradle.kts` file:
 
 ```kotlin
+import com.digithurst.gradle.truststore.Truststore
+
 plugins {
     id("com.digithurst.gradle.truststore") version "1.0.0"
 }
