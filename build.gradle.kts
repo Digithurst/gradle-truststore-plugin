@@ -1,4 +1,15 @@
-version = "1.0.0" // TODO: pull from tag?
+/* * * * * * * * * * * *
+ *  Parameters
+ * * * * * * * * * * * */
+
+// name --> settings.gradle.kts
+group = "com.digithurst"
+version = System.getenv("BUILD_LABEL") ?: "local"
+val isReleaseBuild = System.getenv("BUILD_IS_RELEASE")?.toBoolean() ?: false
+
+/* * * * * * * * * * * *
+ *  Configure Plugins
+ * * * * * * * * * * * */
 
 plugins {
     `java-gradle-plugin`
@@ -21,7 +32,7 @@ gradlePlugin {
 
 pluginBundle {
     website = "https://github.com/Digithurst/gradle-truststore-plugin"
-    vcsUrl = "scm:git@github.com:Digithurst/gradle-truststore-plugin.git"
+    vcsUrl = "https://github.com/Digithurst/gradle-truststore-plugin.git"
 
     (plugins) {
         "truststorePlugin" {

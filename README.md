@@ -19,7 +19,7 @@ plugins {
 
 configure<Truststore> {
     base = empty("your-secure-password") // XOR
-    base = file("truststore", "your-secure-password") // XOR
+    base = file("your-truststore", "your-secure-password") // XOR
     base = java("your-secure-password")
     // default: 
     // base = java("changeit")
@@ -42,7 +42,7 @@ truststore {
     base = java("changeit")
     
     trustedCertificates {
-        file("your-certificate.crt", "your.host")
+        it.file("your-certificate.crt", "your.host")
     }
 }
 
@@ -60,13 +60,26 @@ _Note:_
  * If you have a PEM certificate instead of a CRT, convert it like so:
  
     ```bash
-    openssl x509 -in your-certificate.pem  -inform PEM -out your-certificate.pem
+    openssl x509 -in your-certificate.pem  -inform PEM -out your-certificate.crt
     ```
     
 ## Caveats
 
 <!-- TODO: investigate -->
 
+ * Since the modified trust store is assembled _after_ processing of
+   the build script, it won't be available for pulling _plugins_ via 
+   HTTPS. In such a case, you will have to create your store manually
+   using `keytool` (or pick the result of this plugin up in 
+   `build/truststores`), and point Gradle towards it manually, 
+   e.g. like so:
+   
+   ```groove
+   buildscript {
+       System.setProperty('javax.net.ssl.trustStore', 'your-truststore')
+       System.setProperty('javax.net.ssl.trustStorePassword', 'your-secure-password')
+   }
+   ```
  * Changes in the trust store configuration are not picked up by running
    Gradle daemons. Stop all daemons with `grade --stop` after making
    changes, or use `--no-daemon` in the first place (until the configuration
