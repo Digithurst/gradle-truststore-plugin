@@ -2,6 +2,7 @@ package com.digithurst.gradle.truststore;
 
 import com.digithurst.gradle.truststore.TrustedCertificates.TrustedCertificate;
 import org.gradle.api.GradleScriptException;
+import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
@@ -17,8 +18,20 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 
+/**
+ * Configure a custom trust store for Gradle to use during builds.
+ * For example, this allows Gradle to pull dependencies from a Maven
+ * repository that uses a self-signed certificate.
+ *
+ * @see Truststore
+ *
+ * @since 1.0.0
+ */
+@SuppressWarnings("unused") // accessed by Gradle triggered by build.gradle.kts
 public final class TruststorePlugin implements Plugin<Project> {
     /**
      * Possible key store types, as per the
@@ -41,20 +54,20 @@ public final class TruststorePlugin implements Plugin<Project> {
 
     private Logger logger = Logging.getLogger(TruststorePlugin.class);
 
-    public File getCustomKeystore(Project project) {
+    // TODO: Make configurable?
+    private File getCustomKeystore(Project project) {
         return new File(project.getBuildDir() + "/truststores", "cacerts");
     }
 
 
     @Override
     public void apply(Project project) {
-        @SuppressWarnings("ConstantConditions") // property is always specified: https://docs.gradle.org/current/userguide/build_environment.html
-        String javaHome = project.property("org.gradle.java.home").toString();
+        String javaHome = System.getProperty("java.home");
         logger.debug("Found Java home directory: " + javaHome);
 
-        project.getExtensions().create("truststore", Truststore.class, project.getProjectDir(), javaHome);
+        Truststore extension = new Truststore(project.getProjectDir(), javaHome);
+        project.getExtensions().add(Truststore.class, "truststore", extension);
 
-        project.property("org.gradle.java.home");
         project.afterEvaluate(this::setupStore);
         logger.debug("Deferred setup of trust store");
     }
@@ -70,14 +83,19 @@ public final class TruststorePlugin implements Plugin<Project> {
             logger.debug("Using default trust store: " + storeBase.getStore().getAbsolutePath());
         } else if (truststore.getBase().getStore() != null && truststore.getCertificates().isEmpty()) {
             assert storeBase.getStore() != null;
-            // TODO: Verify that store exists and is valid
+            if (!storeBase.getStore().isFile()) {
+                throw new InvalidUserCodeException("Key store file does not exist: "
+                        + storeBase.getStore().getAbsolutePath());
+            }
+            // TODO: Verify that store is valid?
 
             logger.debug("Using custom trust store: " + storeBase.getStore().getAbsolutePath());
             System.setProperty("javax.net.ssl.trustStore", storeBase.getStore().getAbsolutePath());
             System.setProperty("javax.net.ssl.trustStorePassword", storeBase.getPassword());
-
         } else {
-            // TODO: verify that action as to be taken: do nothing if result is present and inputs haven't changed.
+            // TODO: verify that action has to be taken: do nothing if result is present and inputs haven't changed.
+            //       Investigate whether that's worth is: according to log timestamps, the actual import only takes
+            //       a few hundreds of a second, any form of reasonable check may take about as long.
 
             final File targetFile = getCustomKeystore(project);
             try {
@@ -90,24 +108,27 @@ public final class TruststorePlugin implements Plugin<Project> {
 
                     // Apparently, there's no way to determine the type of the key store at hand,
                     // so we try one after the other.
-                    // TODO: Refactor to stream-based approach
-                    KeyStore ksFound = null;
-                    for ( final String ksType : keyStoreTypes ) {
-                        try ( FileInputStream storeIn = new FileInputStream(storeBase.getStore().getAbsoluteFile()) ) {
-                            ksFound = KeyStore.getInstance(ksType);
-                            ksFound.load(storeIn, storeBase.getPassword().toCharArray());
-                            break;
-                        } catch (KeyStoreException|NoSuchAlgorithmException e) {
-                            logger.debug("Key store is not of type " + ksType);
-                        }
-                    }
+                    ks = Stream.of(keyStoreTypes)
+                            .map(ksType -> {
+                                try ( FileInputStream storeIn = new FileInputStream(storeBase.getStore().getAbsoluteFile()) ) {
+                                    KeyStore store = KeyStore.getInstance(ksType);
+                                    store.load(storeIn, storeBase.getPassword().toCharArray());
+                                    return store;
+                                } catch (KeyStoreException|NoSuchAlgorithmException e) {
+                                    logger.debug("Key store is not of type " + ksType);
+                                    return null;
+                                } catch (IOException|CertificateException e) {
+                                    logger.error("Loading key store failed", e);
+                                    return null;
+                                }
+                            })
+                            .filter(Objects::nonNull)
+                            .findFirst()
+                            .orElseThrow(() ->
+                                    new KeyStoreException("No provider could load "
+                                            + storeBase.getStore().getAbsoluteFile()));
 
-                    if (ksFound == null) {
-                        throw new KeyStoreException("No provider is compatible with " + storeBase.getStore().getAbsoluteFile());
-                    }
-
-                    logger.debug("Imported key store of type " + ksFound.getType());
-                    ks = ksFound;
+                    logger.debug("Imported key store of type " + ks.getType());
                 } else {
                     ks = KeyStore.getInstance(KeyStore.getDefaultType());
                     ks.load(null, storeBase.getPassword().toCharArray());

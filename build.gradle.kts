@@ -1,4 +1,4 @@
-version = "0.9.9" // TODO: pull from tag
+version = "1.0.0" // TODO: pull from tag?
 
 plugins {
     `java-gradle-plugin`
@@ -25,7 +25,7 @@ pluginBundle {
 
     (plugins) {
         "truststorePlugin" {
-            displayName = "Trust Stores for Builds"
+            displayName = "Custom Trust Stores for Builds"
             description = """
                 Configure a custom trust store for Gradle to use during builds.
                 For example, this allows Gradle to pull dependencies from a Maven

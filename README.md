@@ -6,8 +6,6 @@ Configure a custom trust store for Gradle to use during builds.
 For example, this allows Gradle to pull dependencies from a Maven
 repository that uses a self-signed certificate.
 
-**WIP**
-
 ## Usage
 
 Add this to your `build.gradle.kts` file:
@@ -29,6 +27,7 @@ configure<Truststore> {
     trustedCertificates {
         file("your-certificate.crt", "your.host")
     }
+    // default: no addition certificates
 }
 ```
 
@@ -51,15 +50,14 @@ truststore {
 
 _Note:_ 
 
- * Using Java's truststore as a base requires environment variable 
-   `JAVA_HOME` to be set correctly.
-   The plugin will then look for truststore `$JAVA_HOME/lib/security/cacerts`.
+ * If `base = java(...)` is used, the plugin will look for trust store 
+   `$JAVA_HOME/lib/security/cacerts`. Provide the corresponding password.
  * In case of `file` and `java`, the original key stores are never changed.
 
 
 ## Additional Hints
 
- * If you have a PEM instead of a CRT, convert like so:
+ * If you have a PEM certificate instead of a CRT, convert it like so:
  
     ```bash
     openssl x509 -in your-certificate.pem  -inform PEM -out your-certificate.pem
