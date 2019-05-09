@@ -1,6 +1,8 @@
 # Custom Trust Stores for Gradle Builds
 
-<!-- TODO: add badges -->
+[
+  ![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/digithurst/gradle/com.digithurst.gradle.truststore/maven-metadata.xml.svg?label=gradle%20plugin)
+](https://plugins.gradle.org/plugin/com.digithurst.gradle.truststore)
 
 Configure a custom trust store for Gradle to use during builds.
 For example, this allows Gradle to pull dependencies from a Maven
