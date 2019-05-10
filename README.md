@@ -13,21 +13,19 @@ repository that uses a self-signed certificate.
 Add this to your `build.gradle.kts` file:
 
 ```kotlin
-import com.digithurst.gradle.truststore.Truststore
-
 plugins {
-    id("com.digithurst.gradle.truststore") version "1.0.0"
+    id("com.digithurst.gradle.truststore") version "1.1.0"
 }
 
-configure<Truststore> {
+truststore {
     base = empty("your-secure-password") // XOR
-    base = file("your-truststore", "your-secure-password") // XOR
+    base = file("your-truststore", password = "your-secure-password") // XOR
     base = java("your-secure-password")
     // default: 
     // base = java("changeit")
     
     trustedCertificates {
-        file("your-certificate.crt", "your.host")
+        file("your-certificate.crt", alias = "your.host")
     }
     // default: no addition certificates
 }
@@ -37,7 +35,7 @@ Or, if you prefer, your `build.gradle` file:
 
 ```groovy
 plugins {
-    id 'com.digithurst.gradle.truststore' version '1.0.0'
+    id 'com.digithurst.gradle.truststore' version '1.1.0'
 }
 
 truststore {
@@ -65,7 +63,7 @@ _Note:_
     openssl x509 -in your-certificate.pem  -inform PEM -out your-certificate.crt
     ```
     
-## Caveats
+## Limitations
 
 <!-- TODO: investigate -->
 

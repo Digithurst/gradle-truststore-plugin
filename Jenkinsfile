@@ -18,8 +18,8 @@ pipeline {
     stages {
         stage('Prepare') {
             steps {
-                sh script: './gradlew --version'
-                sh script: "./gradlew clean"
+                sh script: './gradlew --no-daemon--version'
+                sh script: "./gradlew --no-daemon clean"
             }
         }
 
@@ -40,7 +40,7 @@ pipeline {
 
                 script {
                     if (isRelease()) {
-                        sh script: ["./gradlew publishPlugins",
+                        sh script: ["./gradlew --no-daemon publishPlugins",
                                     "-Pgradle.publish.key=${env.GPP_AUTH_USR}",
                                     "-Pgradle.publish.secret=${env.GPP_AUTH_PSW}"].join(" ")
                     }
