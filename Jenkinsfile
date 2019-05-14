@@ -18,7 +18,7 @@ pipeline {
     stages {
         stage('Prepare') {
             steps {
-                sh script: './gradlew --no-daemon--version'
+                sh script: './gradlew --no-daemon --version'
                 sh script: "./gradlew --no-daemon clean"
             }
         }

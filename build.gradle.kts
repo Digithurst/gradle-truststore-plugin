@@ -76,6 +76,12 @@ tasks {
         jvmTarget = "1.8"
     }
 
+    val sourceJar by creating(Jar::class) {
+        archiveClassifier.set("sources")
+        from(sourceSets.main.get().allSource)
+    }
+    artifacts.add("archives", sourceJar)
+
     dokka {
         outputDirectory = "$buildDir/javadoc"
         jdkVersion = 8
@@ -85,7 +91,7 @@ tasks {
     val dokkaJar by creating(Jar::class) {
         from(dokka)
         group = JavaBasePlugin.DOCUMENTATION_GROUP
-        classifier = "javadoc"
+        archiveClassifier.set("javadoc")
         description = "Assembles Kotlin docs with Dokka"
     }
     artifacts.add("archives", dokkaJar)
