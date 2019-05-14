@@ -181,6 +181,8 @@ class TruststorePlugin : Plugin<Project> {
 
 /**
  * Alias for `configure<Truststore> { ... }`.
+ *
+ * @since 1.1.0
  */
 @Suppress("unused") // Used in build.gradle.kts
 inline fun Project.truststore(configuration: Truststore.() -> Unit) {

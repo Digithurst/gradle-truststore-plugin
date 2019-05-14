@@ -57,7 +57,7 @@ pluginBundle {
                 Configure a custom trust store for Gradle to use during builds.
                 For example, this allows Gradle to pull dependencies from a Maven
                 repository that uses a self-signed certificate.
-            """.trimIndent()
+            """.trimIndent().replace("\n", "")
             tags = listOf("certificates", "ca", "truststore", "build-configuration")
         }
     }
